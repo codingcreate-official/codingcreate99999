@@ -1748,7 +1748,7 @@ nav .nl a{padding:6px 12px !important;font-size:14px !important}
   if(location.protocol==='file:'){sc.innerHTML='<div class="cin-empty">🎬<br>الفيديو بيشتغل بس لما الصفحة تتفتح من موقع (رابط https)<br>مش من ملف على الجهاز</div>';return;}
   var id=atob('YzZMM2ZiRnY4Wjg=').split('').reverse().join('');
   var src='https://www.youtube-nocookie.com/embed/'+id+'?controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&cc_load_policy=0&enablejsapi=1&origin='+encodeURIComponent(location.origin);
-  sc.innerHTML='<iframe title="سينما الكود" sandbox="allow-scripts allow-same-origin allow-presentation" allow="encrypted-media" referrerpolicy="strict-origin-when-cross-origin" src="'+src+'"></iframe>'
+  sc.innerHTML='<iframe title="سينما الكود" sandbox="allow-scripts allow-same-origin allow-presentation" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" src="'+src+'"></iframe>'
    +'<div class="cin-hit"></div><div class="cin-cover"><button class="cin-big" aria-label="تشغيل">▶</button></div>'
    +'<div class="cin-bar"><button data-a="play">▶</button><button data-a="b">-10</button><button data-a="f">+10</button><input class="cin-seek" type="range" min="0" max="1000" value="0" aria-label="التقدم"><span class="cin-time">0:00 / 0:00</span><button data-a="rate">1x</button><button data-a="mute">🔊</button><button data-a="fs">⛶</button></div>';
   ['contextmenu','dragstart'].forEach(function(e){sc.addEventListener(e,function(ev){ev.preventDefault()})});
@@ -1757,7 +1757,7 @@ nav .nl a{padding:6px 12px !important;font-size:14px !important}
   function setUI(st){var pl=(st===1||st===3);cover.classList.toggle('off',pl);pb.textContent=pl?'❚❚':'▶'}
   function tick(){if(!P||!P.getDuration||drag)return;var d=P.getDuration(),c=P.getCurrentTime();if(d>0){seek.value=Math.round(c/d*1000);tm.textContent=fmt(c)+' / '+fmt(d)}}
   function toggle(){if(!P)return;var st=P.getPlayerState();(st===1||st===3)?P.pauseVideo():P.playVideo()}
-  function init(){P=new YT.Player(fr,{events:{onReady:function(){setInterval(tick,300)},onStateChange:function(e){setUI(e.data)}}})}
+  function init(){P=new YT.Player(fr,{events:{onReady:function(){setInterval(tick,300)},onStateChange:function(e){setUI(e.data)},onError:function(e){cover.classList.remove('off');cover.innerHTML='<div class="cin-empty" style="font-size:18px">تعذر تشغيل الفيديو (كود '+e.data+')<br>تأكد إن Allow embedding شغّال للفيديو</div>'}}})}
   if(window.YT&&YT.Player)init();else{var old=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=function(){if(old)old();init()};var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t)}
   sc.querySelector('.cin-hit').addEventListener('click',toggle);cover.addEventListener('click',toggle);
   seek.addEventListener('input',function(){drag=true;if(P&&P.getDuration)tm.textContent=fmt(seek.value/1000*P.getDuration())+' / '+fmt(P.getDuration())});
