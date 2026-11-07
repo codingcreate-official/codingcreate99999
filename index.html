@@ -1726,23 +1726,50 @@ nav .nl a{padding:6px 12px !important;font-size:14px !important}
 .cin-screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .cin-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;color:#fff7e6;font:700 22px/1.8 var(--ar,system-ui,sans-serif)}
 .cin-shield{position:absolute;left:0;right:0;top:0;height:68px;z-index:2;background:transparent}
+.cin-screen iframe{pointer-events:none}
+.cin-hit{position:absolute;inset:0;z-index:2;cursor:pointer}
+.cin-cover{position:absolute;inset:0;z-index:3;background:#0b0f1e;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:opacity .2s}
+.cin-cover.off{opacity:0;pointer-events:none}
+.cin-big{width:84px;height:84px;border-radius:50%;border:4px solid #fff7e6;background:linear-gradient(135deg,#ff2e93,#a23cf0);color:#fff;font-size:34px;padding:0 0 0 6px;cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.cin-bar{position:absolute;left:0;right:0;bottom:0;z-index:5;display:flex;align-items:center;gap:8px;padding:22px 10px 8px;direction:ltr;background:linear-gradient(transparent,rgba(0,0,0,.75));color:#fff;font:700 13px/1 system-ui,sans-serif}
+.cin-bar button{flex:none;min-width:34px;height:34px;border:0;border-radius:8px;background:rgba(255,255,255,.18);color:#fff;font:700 14px/1 system-ui,sans-serif;cursor:pointer;padding:0 8px}
+.cin-bar button:hover{background:rgba(255,255,255,.35)}
+.cin-seek{flex:1;min-width:60px;accent-color:#ff2e93;height:6px;cursor:pointer}
+.cin-time{flex:none;white-space:nowrap;font-variant-numeric:tabular-nums}
+.cin-screen:fullscreen{aspect-ratio:auto;border:0;border-radius:0}
+@media(max-width:560px){.cin-time{display:none}.cin-bar{gap:5px;padding-inline:6px}.cin-big{width:64px;height:64px;font-size:26px}}
 .cin-open{display:inline-block;margin-top:12px;padding:8px 16px;border-radius:10px;background:var(--navy,#14224f);color:#fff7e6;text-decoration:none;font:700 15px/1 var(--ar,system-ui,sans-serif)}
 .cin-open[hidden]{display:none}
 </style>
 <script>
-/* سينما الكود: فيديو محمي (من غير رابط ظاهر، ومن غير فتح على يوتيوب، ومن غير كليك يمين) */
+/* سينما الكود: مشغل محمي بأزرار خاصة (مفيش أي واجهة يوتيوب ظاهرة ومفيش كليك يوصل ليوتيوب) */
 (function(){
   var sc=document.getElementById('cin-screen');if(!sc)return;
+  if(location.protocol==='file:'){sc.innerHTML='<div class="cin-empty">🎬<br>الفيديو بيشتغل بس لما الصفحة تتفتح من موقع (رابط https)<br>مش من ملف على الجهاز</div>';return;}
   var id=atob('YzZMM2ZiRnY4Wjg=').split('').reverse().join('');
-  var f=document.createElement('iframe');
-  f.src='https://www.youtube-nocookie.com/embed/'+id+'?rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&playsinline=1';
-  f.title='سينما الكود';f.allowFullscreen=true;
-  f.setAttribute('sandbox','allow-scripts allow-same-origin allow-presentation');
-  f.setAttribute('allow','encrypted-media; picture-in-picture; fullscreen');
-  f.referrerPolicy='strict-origin-when-cross-origin';
-  sc.innerHTML='';sc.appendChild(f);
-  var sh=document.createElement('div');sh.className='cin-shield';sc.appendChild(sh);
+  var src='https://www.youtube-nocookie.com/embed/'+id+'?controls=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1&fs=0&playsinline=1&cc_load_policy=0&enablejsapi=1&origin='+encodeURIComponent(location.origin);
+  sc.innerHTML='<iframe title="سينما الكود" sandbox="allow-scripts allow-same-origin allow-presentation" allow="encrypted-media" referrerpolicy="strict-origin-when-cross-origin" src="'+src+'"></iframe>'
+   +'<div class="cin-hit"></div><div class="cin-cover"><button class="cin-big" aria-label="تشغيل">▶</button></div>'
+   +'<div class="cin-bar"><button data-a="play">▶</button><button data-a="b">-10</button><button data-a="f">+10</button><input class="cin-seek" type="range" min="0" max="1000" value="0" aria-label="التقدم"><span class="cin-time">0:00 / 0:00</span><button data-a="rate">1x</button><button data-a="mute">🔊</button><button data-a="fs">⛶</button></div>';
   ['contextmenu','dragstart'].forEach(function(e){sc.addEventListener(e,function(ev){ev.preventDefault()})});
+  var fr=sc.querySelector('iframe'),cover=sc.querySelector('.cin-cover'),seek=sc.querySelector('.cin-seek'),tm=sc.querySelector('.cin-time'),pb=sc.querySelector('[data-a=play]'),P=null,drag=false,rates=[1,1.25,1.5,2,0.75],ri=0;
+  function fmt(t){t=Math.max(0,Math.floor(t||0));var h=Math.floor(t/3600),m=Math.floor(t%3600/60),x=t%60;return (h?h+':'+(m<10?'0':''):'')+m+':'+(x<10?'0':'')+x}
+  function setUI(st){var pl=(st===1||st===3);cover.classList.toggle('off',pl);pb.textContent=pl?'❚❚':'▶'}
+  function tick(){if(!P||!P.getDuration||drag)return;var d=P.getDuration(),c=P.getCurrentTime();if(d>0){seek.value=Math.round(c/d*1000);tm.textContent=fmt(c)+' / '+fmt(d)}}
+  function toggle(){if(!P)return;var st=P.getPlayerState();(st===1||st===3)?P.pauseVideo():P.playVideo()}
+  function init(){P=new YT.Player(fr,{events:{onReady:function(){setInterval(tick,300)},onStateChange:function(e){setUI(e.data)}}})}
+  if(window.YT&&YT.Player)init();else{var old=window.onYouTubeIframeAPIReady;window.onYouTubeIframeAPIReady=function(){if(old)old();init()};var t=document.createElement('script');t.src='https://www.youtube.com/iframe_api';document.head.appendChild(t)}
+  sc.querySelector('.cin-hit').addEventListener('click',toggle);cover.addEventListener('click',toggle);
+  seek.addEventListener('input',function(){drag=true;if(P&&P.getDuration)tm.textContent=fmt(seek.value/1000*P.getDuration())+' / '+fmt(P.getDuration())});
+  seek.addEventListener('change',function(){if(P&&P.getDuration)P.seekTo(seek.value/1000*P.getDuration(),true);drag=false});
+  sc.querySelector('.cin-bar').addEventListener('click',function(e){var b=e.target.closest('button');if(!b||!P)return;var a=b.getAttribute('data-a');
+    if(a==='play')toggle();
+    else if(a==='b')P.seekTo(Math.max(0,P.getCurrentTime()-10),true);
+    else if(a==='f')P.seekTo(P.getCurrentTime()+10,true);
+    else if(a==='rate'){ri=(ri+1)%rates.length;P.setPlaybackRate(rates[ri]);b.textContent=rates[ri]+'x'}
+    else if(a==='mute'){if(P.isMuted()){P.unMute();b.textContent='🔊'}else{P.mute();b.textContent='🔇'}}
+    else if(a==='fs'){var d=document;if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d)}else{(sc.requestFullscreen||sc.webkitRequestFullscreen).call(sc)}}
+  });
 })();
 </script>
 <style id="pen-polish">
